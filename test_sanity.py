@@ -1,28 +1,35 @@
-from models import Coordinates, Vehicle, World
-from engine import SimulationEngine
+import constants
+from world import Coordinates, World
+from rover import Rover
 
 def test_basic_movement():
     world = World(width=100, height=100)
     start_coords = Coordinates(0, 0)
-    vehicle = Vehicle(name="Test", position=start_coords, angle=0, fuel=100, max_fuel=150)
-    target_coords = Coordinates(50, 50)
-
-    engine = SimulationEngine(vehicle=vehicle, world=world, target_coords=target_coords)
+    rover = Rover(name="Test", position=start_coords, angle=0, fuel=100, max_fuel=150)
 
     # Test movement forward
-    engine.process_turn("M", 10)
-    assert vehicle.position.x == 10.0
-    assert vehicle.position.y == 0.0
-    # Fuel: 100 - 2 (turn cost) - 5 (10 * 0.5) = 93.0
-    assert vehicle.fuel == 93.0
+    dist = 10
+    rover.move(dist)
+    assert rover.position.x == 10.0
+    assert rover.position.y == 0.0
+    # Fuel: 100 - (10 * 0.5) = 95.0
+    assert rover.fuel == 95.0
 
     # Test rotation
-    engine.process_turn("O", 90)
-    assert vehicle.angle == 90.0
-    # Fuel: 93 - 2 = 91
-    assert vehicle.fuel == 91.0
+    rover.rotate(90)
+    assert rover.angle == 90.0
 
-    print("Basic tests passed!")
+    print("Podstawowe testy jednostkowe zaliczone!")
+
+def test_out_of_bounds():
+    world = World(width=100, height=100)
+    pos_inside = Coordinates(10, 10)
+    pos_outside = Coordinates(60, 0)
+
+    assert world.is_out_of_bounds(pos_inside) == False
+    assert world.is_out_of_bounds(pos_outside) == True
+    print("Test granic świata zaliczony!")
 
 if __name__ == "__main__":
     test_basic_movement()
+    test_out_of_bounds()
