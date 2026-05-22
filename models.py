@@ -21,6 +21,8 @@ class Vehicle:
     angle: float
     fuel: float
     max_fuel: float
+    total_distance: float = 0.0
+    total_fuel_consumed: float = 0.0
 
 @dataclass
 class World:

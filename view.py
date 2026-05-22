@@ -31,6 +31,12 @@ class SimulationView:
         self.vehicle_turtle.pensize(2)
         self.vehicle_turtle.speed(3)
 
+        # Żółw do interfejsu (HUD)
+        self.hud_turtle = turtle.Turtle()
+        self.hud_turtle.speed(0)
+        self.hud_turtle.hideturtle()
+        self.hud_turtle.penup()
+
         self._draw_bounds()
         self.screen.update()
 
@@ -87,10 +93,75 @@ class SimulationView:
         self.vehicle_turtle.setheading(angle)
         self.vehicle_turtle.goto(coords.x, coords.y)
 
+    def update_hud(self, name: str, fuel: float, max_fuel: float, steps: int, distance: float):
+        self.hud_turtle.clear()
+
+        # Pozycjonowanie interfejsu (lewy górny róg)
+        margin = 30
+        x = -self.world_width / 2
+        y = self.world_height / 2 + 30
+
+        # 1. Pasek paliwa
+        self._draw_fuel_bar(x, y, fuel, max_fuel)
+
+        # 2. Informacje tekstowe
+        self.hud_turtle.goto(x + 110, y - 15)
+        self.hud_turtle.color("black")
+        hud_text = f"Misja: {name} | Krok: {steps} | Dystans: {distance:.1f} j."
+        self.hud_turtle.write(hud_text, font=("Arial", 10, "bold"))
+
+        self.screen.update()
+
+    def _draw_fuel_bar(self, x: float, y: float, fuel: float, max_fuel: float):
+        bar_width = 100
+        bar_height = 15
+        fill_width = (fuel / max_fuel) * bar_width if fuel > 0 else 0
+
+        # Kolor paska zależny od poziomu
+        if fuel / max_fuel > 0.5:
+            color = "green"
+        elif fuel / max_fuel > 0.2:
+            color = "orange"
+        else:
+            color = "red"
+
+        # Rysowanie tła paska
+        self.hud_turtle.goto(x, y)
+        self.hud_turtle.pendown()
+        self.hud_turtle.color("black", "lightgrey")
+        self.hud_turtle.begin_fill()
+        for _ in range(2):
+            self.hud_turtle.forward(bar_width)
+            self.hud_turtle.right(90)
+            self.hud_turtle.forward(bar_height)
+            self.hud_turtle.right(90)
+        self.hud_turtle.end_fill()
+        self.hud_turtle.penup()
+
+        # Rysowanie wypełnienia
+        if fill_width > 0:
+            self.hud_turtle.goto(x, y)
+            self.hud_turtle.pendown()
+            self.hud_turtle.color("black", color)
+            self.hud_turtle.begin_fill()
+            for _ in range(2):
+                self.hud_turtle.forward(fill_width)
+                self.hud_turtle.right(90)
+                self.hud_turtle.forward(bar_height)
+                self.hud_turtle.right(90)
+            self.hud_turtle.end_fill()
+            self.hud_turtle.penup()
+
+        # Napis "FUEL"
+        self.hud_turtle.goto(x + bar_width / 2, y - bar_height - 2)
+        self.hud_turtle.color("black")
+        self.hud_turtle.write(f"ENERGIA: {max(0, fuel):.1f}", align="center", font=("Arial", 8, "normal"))
+
     def clear_window(self):
         self.vehicle_turtle.clear()
         self.vehicle_turtle.hideturtle()
         self.static_drawer.clear()
+        self.hud_turtle.clear()
         # Przygotowanie do ewentualnego ponownego użycia lub zamknięcia
         self.screen.update()
 
@@ -98,5 +169,6 @@ class SimulationView:
         self.vehicle_turtle.clear()
         self.vehicle_turtle.showturtle()
         self.static_drawer.clear()
+        self.hud_turtle.clear()
         self._draw_bounds()
         self.screen.update()

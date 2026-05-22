@@ -51,16 +51,21 @@ def start_simulation(view: SimulationView):
     view.setup_initial_position(vehicle.position, vehicle.angle)
     view.draw_target(target_coords)
     view.draw_elements(world.elements)
+    view.update_hud(vehicle.name, vehicle.fuel, vehicle.max_fuel, engine.step_counter, vehicle.total_distance)
 
     # Główna pętla symulacji (Event Loop)
     while not engine.game_over:
         clear_console()
+        dist_to_target = engine.get_distance_to_target()
+        avg_consumption = vehicle.total_fuel_consumed / vehicle.total_distance if vehicle.total_distance > 0 else 0
+
         print(f"🚀 Wyprawa: {vehicle.name} | Krok: {engine.step_counter}")
         print("------------------------------------------------")
         print(f"📍 Pozycja: X = {vehicle.position.x:.2f}, Y = {vehicle.position.y:.2f}")
         print(f"🧭 Kąt zwrotu: {vehicle.angle}°")
-        print(f"🔋 Stan paliwa: {vehicle.fuel:.2f} pkt")
-        print(f"🎯 Cel wyprawy znajduje się w okolicach: X = {target_coords.x}, Y = {target_coords.y}")
+        print(f"🔋 Stan paliwa: {vehicle.fuel:.2f} / {vehicle.max_fuel:.1f} pkt")
+        print(f"🛣️  Dystans: {vehicle.total_distance:.1f} j. | Śr. zużycie: {avg_consumption:.2f} pkt/j.")
+        print(f"🎯 Cel: X = {target_coords.x}, Y = {target_coords.y} | 📏 Odległość: {dist_to_target:.2f} j.")
         print("------------------------------------------------")
 
         if engine.journal:
@@ -91,6 +96,7 @@ def start_simulation(view: SimulationView):
 
         # Aktualizacja pozycji na ekranie Turtle
         view.update_position(vehicle.position, vehicle.angle)
+        view.update_hud(vehicle.name, vehicle.fuel, vehicle.max_fuel, engine.step_counter, vehicle.total_distance)
 
     # Ekran podsumowania i raport końcowy
     clear_console()
@@ -104,7 +110,10 @@ def start_simulation(view: SimulationView):
     print(f"• Początkowe współrzędne: X = {start_x}, Y = {start_y}")
     print(f"• Końcowe współrzędne:   X = {vehicle.position.x:.2f}, Y = {vehicle.position.y:.2f}")
     print(f"• Wykonane kroki/tury:   {engine.step_counter}")
+    print(f"• Całkowity dystans:     {vehicle.total_distance:.1f} j.")
     print(f"• Pozostałe zasoby:      {vehicle.fuel:.2f} pkt")
+    avg_final = vehicle.total_fuel_consumed / vehicle.total_distance if vehicle.total_distance > 0 else 0
+    print(f"• Średnie zużycie:       {avg_final:.2f} pkt/j.")
     print("================================================")
 
 if __name__ == "__main__":
