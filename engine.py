@@ -27,30 +27,46 @@ class SimulationEngine:
             if abs(rx) > 5 and abs(ry) > 5:
                 self.world.add_element(rx, ry, random.choice(types))
 
+    def get_distance_to_target(self) -> float:
+        return math.sqrt(
+            (self.vehicle.position.x - self.target.x) ** 2 +
+            (self.vehicle.position.y - self.target.y) ** 2
+        )
+
     def process_turn(self, action: str, modifier_value: float):
         if self.game_over:
             return
 
         self.step_counter += 1
         self.journal.clear()
+        
+        fuel_before = self.vehicle.fuel
         # Koszt bazowy przetrwania tury
         self.vehicle.fuel -= 2
+        self.journal.append(f"Systemy podtrzymywania pracy zużyły 2.0 pkt energii.")
 
         if action == "M":  # Ruch naprzód
             distance = modifier_value
             new_pos = self.vehicle.position.move_by_angle(self.vehicle.angle, distance)
             if self.world.is_out_of_bounds(new_pos):
-                self.journal.append("⚠️ Próba wyjścia poza granice świata! Pojazd zatrzymał się.")
+                self.journal.append("⚠️ ALARM: Wykryto granicę obszaru! Systemy bezpieczeństwa zatrzymały pojazd.")
                 self.vehicle.fuel -= 5  # Kara za uderzenie w barierę
+                self.journal.append("Zarejestrowano uderzenie w barierę - dodatkowy koszt 5.0 pkt.")
             else:
                 self.vehicle.position = new_pos
-                # Koszt paliwa zależny od przebytej drogi
-                self.vehicle.fuel -= round(distance * 0.5, 2)
-                self.journal.append(f"Pojazd przemieścił się o {distance} jednostek.")
+                fuel_cost = round(distance * 0.5, 2)
+                self.vehicle.fuel -= fuel_cost
+                self.vehicle.total_distance += distance
+                self.journal.append(f"Silniki pracują. Przebyto {distance} j. (Zużycie: {fuel_cost} pkt).")
 
         elif action == "O":  # Obrót (Zmiana kąta)
             self.vehicle.angle = (self.vehicle.angle + modifier_value) % 360
             self.journal.append(f"Zmieniono kierunek o {modifier_value}° (Aktualny kąt: {self.vehicle.angle}°).")
+
+        # Obliczanie całkowitego zużytego paliwa (tylko spadki)
+        fuel_after = self.vehicle.fuel
+        if fuel_after < fuel_before:
+            self.vehicle.total_fuel_consumed += (fuel_before - fuel_after)
 
         # Sprawdzenie interakcji z elementami świata w bliskim sąsiedztwie
         self._check_world_interactions()
@@ -96,10 +112,7 @@ class SimulationEngine:
 
     def _check_end_conditions(self):
         # Warunek 1: Dotarcie do celu (odległość euklidesowa <= 10 jednostek)
-        dist_to_target = math.sqrt(
-            (self.vehicle.position.x - self.target.x) ** 2 +
-            (self.vehicle.position.y - self.target.y) ** 2
-        )
+        dist_to_target = self.get_distance_to_target()
         if dist_to_target <= 10.0:
             self.game_over = True
             self.success = True
